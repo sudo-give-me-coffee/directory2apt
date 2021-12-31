@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 [ ! "${EUID}" = "0" ] && {
-  echo
+  echo "directory2apt: transforming '${1}' on repository: Operation not permitted"
   exit 1
 }
 
 [ ! -d "${1}" ] && {
-  echo "Error: '${1}' isn't a directory aborting..."
+  echo "directory2apt: '${1}' isn't a directory"
   exit 1
 }
 
