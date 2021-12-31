@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+[ ! "${EUID}" = "0" ] && {
+  echo
+  exit 1
+}
+
+[ ! -d "${1}" ] && {
+  echo "Error: '${1}' isn't a directory aborting..."
+  exit 1
+}
+
+chown -Rv root:root "${1}"
+cd "${1}"
+
+arch=$(dpkg-architecture | grep ^"DEB_HOST_ARCH=" | cut -d\= -f2)
+
+mkdir -p "dists/./main/binary-${arch}/"
+
+for deb in *.deb ; do
+  dpkg -I $deb | sed 's/^ //g' | grep -A100 -i -E 'package:'
+  echo "Filename: $deb"
+  echo "MD5sum: $(md5sum -b $deb | cut -d' ' -f1)"
+  echo "SHA1: $(sha1sum -b $deb | cut -d' ' -f1)"
+  echo "SHA256: $(sha256sum -b $deb | cut -d' ' -f1)"
+  echo
+done | tee "dists/./main/binary-${arch}/Packages"
+
+sources_list=$(echo -n "${PWD}" | cut -c 2- | tr '/' '-' | tr '[[:space:]]' '_').list
+echo "deb [trusted=yes] file:$(readlink -e $PWD) . main" | sudo tee "/etc/apt/sources.list.d/${sources_list}" > /dev/null
+
+# Release file
+(
+  echo "Origin: "$(dirname "${1}")
+  echo "Label: "$(dirname "${1}")
+  echo "Suite: ."
+  echo "Version: 1.0"
+  echo "Codename: local"
+  echo "Date: $(env LANG=C date -u +'%a, %d %h %Y %H:%M:%S UTC')"
+  echo "Architectures: ${arch}"
+  echo "Components: main"
+  echo "Description: Local repository"
+  echo "Acquire-By-Hash: no"
+) > dists/Release
+
+rm -rfv /var/lib/apt/lists/
+rm -v /var/cache/apt/pkgcache.bin
+rm -v /var/cache/apt/srcpkgcache.bin
+mkdir -p /var/lib/apt/lists/
+apt update
