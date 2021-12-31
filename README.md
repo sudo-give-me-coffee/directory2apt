@@ -1,5 +1,5 @@
 # directory2apt
-Make any folder an APT repository
+Make any folder an APT repository with a single command
 
 # Installing
 
@@ -33,4 +33,4 @@ sudo directory2apt /var/custom-apt-repo
 
 # Disabling the custom repo
 
-Just remome the source related file in `/etc/apt/sources.list.d`
+Just remove the source related file in `/etc/apt/sources.list.d`
